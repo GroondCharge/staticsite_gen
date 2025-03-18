@@ -1,7 +1,7 @@
 import unittest
 from textnode import TextNode, TextType
 #from texnode import TextNode, TextType
-from splitnodes import split_nodes_delimiter, split_nodes_link, split_nodes_image, text_to_textnodes
+from splitnodes import split_nodes_delimiter, split_nodes_link, split_nodes_image, text_to_textnodes, markdown_to_blocks
 class TestSplitNodes(unittest.TestCase):
     def test_thestuff(self):
         node = TextNode("This is text with a `code block` word", TextType.TEXT)
@@ -207,5 +207,137 @@ class TestTextToTextNodes(unittest.TestCase):
         self.assertEqual(text_to_textnodes(text), expected_output)
 
 
+
+
+class TestMarkdownToBlocks(unittest.TestCase):
+    def test_basic_paragraph_split(self):
+        """A simple example with two paragraphs separated by a blank line."""
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph
+"""
+        blocks = markdown_to_blocks(md)
+        # We expect empty items removed.
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph",
+            ],
+        )
+
+    def test_example_from_user(self):
+        """The example the user provided with paragraphs, code, italics, and a list."""
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+
+    def test_single_line_no_breaks(self):
+        """Single line of text should produce a single block."""
+        md = """Single line no breaks"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(blocks, ["Single line no breaks"])
+
+    def test_only_single_newlines(self):
+        """No double line breaks, so everything is one block."""
+        md = "Line one\nLine two\nLine three"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(blocks, ["Line one\nLine two\nLine three"])
+
+    def test_multiple_double_line_breaks(self):
+        """Check that extra blank lines do not create empty blocks."""
+        md = """
+Para one
+
+Para two
+
+
+Para three
+"""
+        # We want to ensure we skip over empty lines.
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "Para one",
+                "Para two",
+                "Para three",
+            ],
+        )
+
+    def test_leading_and_trailing_whitespace(self):
+        """Leading/trailing spaces should be stripped, and empty blocks removed."""
+        md = """
+   Leading spaces here   \n\nTrailing spaces here   \n"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "Leading spaces here",
+                "Trailing spaces here",
+            ],
+        )
+
+    def test_list_items_no_blank_line(self):
+        """No double breaks means all list items are in a single block."""
+        md = "- Item 1\n- Item 2\n- Item 3"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(blocks, ["- Item 1\n- Item 2\n- Item 3"])
+
+    def test_list_items_with_blank_line(self):
+        """A blank line should split the list into two blocks."""
+        md = """
+- Item 1
+- Item 2
+
+- Item 3
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            ["- Item 1\n- Item 2", "- Item 3"],
+        )
+
+    def test_long_paragraph_across_lines(self):
+        """Single block split by double break."""
+        md = """
+This line is part one
+and this line is part two
+
+Now we start another paragraph.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This line is part one\nand this line is part two",
+                "Now we start another paragraph.",
+            ],
+        )
+
+    def test_empty_input(self):
+        """Completely empty input should return an empty list."""
+        md = """"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(blocks, [])
+
+
+    
 if __name__ == "__main__":
     unittest.main()

@@ -76,3 +76,23 @@ def text_to_textnodes(text):
     text_nodes = split_nodes_delimiter(text_nodes, "_", TextType.ITALIC)
     return text_nodes
 
+def markdown_to_blocks(markdown):
+    return list(
+                filter(lambda x: x, list(
+                    map(lambda x: x.strip(),markdown.split("\n\n")))))
+
+# md = """
+# This is **bolded** paragraph
+
+# This is another paragraph with _italic_ text and `code` here
+# This is the same paragraph on a new line
+
+
+
+
+
+# - This is a list
+# - with items
+# """
+
+# print(markdown_to_blocks(md))
